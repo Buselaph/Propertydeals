@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Home, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Home, Mail, Phone, MapPin } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -21,13 +21,13 @@ export default function Footer() {
               South Africa&apos;s most affordable property platform. Find your dream home or list your property — no hidden fees, no surprises.
             </p>
             <div className="flex items-center gap-3">
-              {[Facebook, Twitter, Instagram, Linkedin].map((Icon, i) => (
+              {["FB", "X", "IG", "LI"].map((label) => (
                 <a
-                  key={i}
+                  key={label}
                   href="#"
-                  className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-amber-500 flex items-center justify-center transition-all"
+                  className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-amber-500 flex items-center justify-center transition-all text-xs font-bold text-slate-300 hover:text-white"
                 >
-                  <Icon className="w-4 h-4" />
+                  {label}
                 </a>
               ))}
             </div>
