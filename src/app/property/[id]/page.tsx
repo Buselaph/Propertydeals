@@ -2,23 +2,28 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Bed, Bath, Car, Maximize, MapPin, Calendar, ArrowLeft,
+  Bed, Bath, Car, Maximize, MapPin, ArrowLeft,
   Phone, Mail, CheckCircle, Star, Share2, Heart, Building2
 } from "lucide-react";
-import { properties, agents } from "@/lib/data";
+import { supabase } from "@/lib/supabase";
+import { type Property, type Agent } from "@/lib/data";
 import { formatPrice, formatArea } from "@/lib/utils";
+import { EnquiryForm } from "@/components/EnquiryForm";
+import { PropertyMap } from "@/components/PropertyMap";
 
-export function generateStaticParams() {
-  return properties.map((p) => ({ id: p.id }));
-}
+export default async function PropertyPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
-export default function PropertyPage({ params }: { params: { id: string } }) {
-  const property = properties.find((p) => p.id === params.id);
+  const [{ data: property }, { data: relatedData }] = await Promise.all([
+    supabase.from("properties").select("*, agents(*)").eq("id", id).single(),
+    supabase.from("properties").select("*").neq("id", id).limit(3),
+  ]);
+
   if (!property) notFound();
 
-  const agent = agents.find((a) => a.id === property.agentId);
-  const related = properties.filter((p) => p.id !== property.id && p.city === property.city).slice(0, 3);
-  const isRent = property.listingType === "rent";
+  const agent = property.agents as Agent | null;
+  const related = (relatedData ?? []) as Property[];
+  const isRent = (property as Property).listing_type === "rent";
 
   return (
     <div className="bg-slate-50 min-h-screen">
@@ -46,16 +51,14 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
                 unoptimized
                 priority
               />
-              {/* Badges */}
               <div className="absolute top-4 left-4 flex gap-2">
                 <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${isRent ? "bg-blue-600 text-white" : "bg-emerald-600 text-white"}`}>
                   {isRent ? "TO RENT" : "FOR SALE"}
                 </span>
-                {property.newDevelopment && (
+                {property.new_development && (
                   <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-500 text-white">NEW DEVELOPMENT</span>
                 )}
               </div>
-              {/* Actions */}
               <div className="absolute top-4 right-4 flex gap-2">
                 <button className="w-9 h-9 bg-white/90 hover:bg-white rounded-xl flex items-center justify-center shadow-sm transition-all">
                   <Heart className="w-4 h-4 text-slate-600" />
@@ -66,10 +69,9 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
               </div>
             </div>
 
-            {/* Secondary images */}
             {property.images.length > 1 && (
               <div className="grid grid-cols-3 gap-2">
-                {property.images.slice(1).map((img, i) => (
+                {property.images.slice(1).map((img: string, i: number) => (
                   <div key={i} className="rounded-xl overflow-hidden h-24 relative bg-slate-200">
                     <Image src={img} alt="" fill className="object-cover" unoptimized />
                   </div>
@@ -93,8 +95,7 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
                 </div>
               </div>
 
-              {/* Stats */}
-              {property.propertyType !== "commercial" && (
+              {property.property_type !== "commercial" && (
                 <div className="mt-5 pt-5 border-t border-slate-100 grid grid-cols-4 gap-4">
                   {property.bedrooms > 0 && (
                     <div className="text-center">
@@ -129,10 +130,10 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
                 </div>
               )}
 
-              {property.landSize && (
+              {property.land_size && (
                 <div className="mt-3 pt-3 border-t border-slate-100">
                   <p className="text-sm text-slate-500">
-                    Land size: <span className="text-slate-900 font-medium">{formatArea(property.landSize)}</span>
+                    Land size: <span className="text-slate-900 font-medium">{formatArea(property.land_size)}</span>
                   </p>
                 </div>
               )}
@@ -149,7 +150,7 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
               <div className="bg-white rounded-2xl p-6 border border-slate-100">
                 <h2 className="text-lg font-semibold text-slate-900 mb-4">Features & Amenities</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {property.features.map((f) => (
+                  {property.features.map((f: string) => (
                     <div key={f} className="flex items-center gap-2 text-sm text-slate-700">
                       <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
                       {f}
@@ -164,14 +165,14 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
               <h2 className="text-lg font-semibold text-slate-900 mb-4">Property Details</h2>
               <div className="grid grid-cols-2 gap-y-3 text-sm">
                 {[
-                  ["Property Type", property.propertyType.charAt(0).toUpperCase() + property.propertyType.slice(1)],
+                  ["Property Type", property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1)],
                   ["Listing Type", isRent ? "Rental" : "For Sale"],
                   ["Province", property.province],
                   ["City", property.city],
                   ["Suburb", property.suburb],
                   ["Floor Area", formatArea(property.area)],
-                  ...(property.landSize ? [["Land Size", formatArea(property.landSize)]] : []),
-                  ["Listed", new Date(property.createdAt).toLocaleDateString("en-ZA", { year: "numeric", month: "long", day: "numeric" })],
+                  ...(property.land_size ? [["Land Size", formatArea(property.land_size)]] : []),
+                  ["Listed", new Date(property.created_at).toLocaleDateString("en-ZA", { year: "numeric", month: "long", day: "numeric" })],
                 ].map(([key, val]) => (
                   <div key={key} className="flex flex-col">
                     <span className="text-slate-400 text-xs">{key}</span>
@@ -180,11 +181,17 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
                 ))}
               </div>
             </div>
+
+            <PropertyMap
+              address={property.address}
+              suburb={property.suburb}
+              city={property.city}
+              province={property.province}
+            />
           </div>
 
           {/* Sidebar */}
           <div className="space-y-5">
-            {/* Agent Card */}
             {agent && (
               <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm sticky top-24">
                 <div className="flex items-center gap-3 mb-5">
@@ -204,32 +211,7 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
                   </div>
                 </div>
 
-                {/* Contact Form */}
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    placeholder="Your name"
-                    className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
-                  />
-                  <input
-                    type="email"
-                    placeholder="Your email"
-                    className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
-                  />
-                  <input
-                    type="tel"
-                    placeholder="Your phone"
-                    className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
-                  />
-                  <textarea
-                    rows={3}
-                    defaultValue={`Hi, I'm interested in ${property.title}. Please contact me.`}
-                    className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
-                  />
-                  <button className="w-full bg-amber-500 hover:bg-amber-400 text-white font-semibold py-3 rounded-xl transition-all shadow-sm">
-                    Send Enquiry
-                  </button>
-                </div>
+                <EnquiryForm propertyId={property.id} propertyTitle={property.title} />
 
                 <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
                   <a href={`tel:${agent.phone.replace(/\s/g, "")}`} className="flex items-center justify-center gap-1.5 text-sm font-medium bg-slate-50 hover:bg-slate-100 text-slate-700 py-2.5 rounded-xl transition-all">
@@ -247,7 +229,7 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
         {/* Related */}
         {related.length > 0 && (
           <div className="mt-12">
-            <h2 className="text-xl font-bold text-slate-900 mb-6">More in {property.city}</h2>
+            <h2 className="text-xl font-bold text-slate-900 mb-6">More Properties</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {related.map((p) => (
                 <div key={p.id} className="bg-white rounded-2xl overflow-hidden border border-slate-100 hover:shadow-lg transition-all">
@@ -256,7 +238,7 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
                   </div>
                   <div className="p-4">
                     <p className="font-semibold text-slate-900 text-sm truncate">{p.title}</p>
-                    <p className="text-amber-600 font-bold mt-1">{formatPrice(p.price)}{p.listingType === "rent" ? "/mo" : ""}</p>
+                    <p className="text-amber-600 font-bold mt-1">{formatPrice(p.price)}{p.listing_type === "rent" ? "/mo" : ""}</p>
                   </div>
                 </div>
               ))}

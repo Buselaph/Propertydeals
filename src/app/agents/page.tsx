@@ -1,13 +1,16 @@
-import { Search, Star, Shield, MapPin } from "lucide-react";
-import AgentCard from "@/components/AgentCard";
-import { agents } from "@/lib/data";
+import { Shield, Star, MapPin } from "lucide-react";
+import { AgentsGrid } from "@/components/AgentsGrid";
+import { supabase } from "@/lib/supabase";
+import type { Agent } from "@/lib/data";
 
 export const metadata = {
   title: "Find an Agent — Property Deals",
   description: "Browse PPRA-verified property agents across South Africa.",
 };
 
-export default function AgentsPage() {
+export default async function AgentsPage() {
+  const { data: agents } = await supabase.from("agents").select("*");
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -21,19 +24,11 @@ export default function AgentsPage() {
           <p className="text-slate-400 text-base max-w-xl mx-auto mb-8">
             Every agent on Property Deals is PPRA-registered and verified. Browse by area, rating, or agency.
           </p>
-          <div className="max-w-md mx-auto relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by name, area or agency..."
-              className="w-full pl-11 pr-4 py-3.5 text-sm bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-lg"
-            />
-          </div>
+          <AgentsGrid agents={(agents ?? []) as Agent[]} />
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Stats */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <div className="grid grid-cols-3 gap-4 mb-10">
           {[
             { icon: Shield, label: "Verified Agents", value: "850+" },
@@ -48,18 +43,7 @@ export default function AgentsPage() {
           ))}
         </div>
 
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-slate-900">{agents.length} agents found</h2>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {agents.map((a) => (
-            <AgentCard key={a.id} agent={a} />
-          ))}
-        </div>
-
-        {/* CTA */}
-        <div className="mt-14 bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-10 text-center">
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-10 text-center">
           <h3 className="text-2xl font-bold text-white mb-3">Are You an Estate Agent?</h3>
           <p className="text-slate-400 mb-6 max-w-md mx-auto">
             Join Property Deals and list your properties with South Africa&apos;s most affordable portal.

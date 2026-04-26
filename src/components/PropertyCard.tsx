@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function PropertyCard({ property }: Props) {
-  const isRent = property.listingType === "rent";
+  const isRent = property.listing_type === "rent";
 
   return (
     <Link href={`/property/${property.id}`} className="group block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-slate-100 transition-all duration-300 hover:-translate-y-1">
@@ -22,23 +22,19 @@ export default function PropertyCard({ property }: Props) {
           className="object-cover group-hover:scale-105 transition-transform duration-500"
           unoptimized
         />
-        {/* Badges */}
         <div className="absolute top-3 left-3 flex gap-2">
           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${isRent ? "bg-blue-600 text-white" : "bg-emerald-600 text-white"}`}>
             {isRent ? "TO RENT" : "FOR SALE"}
           </span>
-          {property.newDevelopment && (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500 text-white">
-              NEW
-            </span>
+          {property.new_development && (
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500 text-white">NEW</span>
           )}
-          {property.featured && !property.newDevelopment && (
+          {property.featured && !property.new_development && (
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-purple-600 text-white flex items-center gap-1">
               <Star className="w-3 h-3 fill-current" /> FEATURED
             </span>
           )}
         </div>
-        {/* Price overlay */}
         <div className="absolute bottom-3 left-3">
           <span className="text-white font-bold text-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             {formatPrice(property.price)}
@@ -57,8 +53,7 @@ export default function PropertyCard({ property }: Props) {
           {property.title}
         </h3>
 
-        {/* Stats */}
-        {property.propertyType !== "commercial" && (
+        {property.property_type !== "commercial" && (
           <div className="flex items-center gap-3 text-xs text-slate-500 pt-3 border-t border-slate-100">
             {property.bedrooms > 0 && (
               <span className="flex items-center gap-1">
@@ -80,7 +75,7 @@ export default function PropertyCard({ property }: Props) {
             </span>
           </div>
         )}
-        {property.propertyType === "commercial" && (
+        {property.property_type === "commercial" && (
           <div className="flex items-center gap-3 text-xs text-slate-500 pt-3 border-t border-slate-100">
             <span className="flex items-center gap-1">
               <Maximize className="w-3.5 h-3.5 text-slate-400" />

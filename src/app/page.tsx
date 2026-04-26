@@ -14,7 +14,8 @@ import {
 import SearchBar from "@/components/SearchBar";
 import PropertyCard from "@/components/PropertyCard";
 import AgentCard from "@/components/AgentCard";
-import { properties, agents } from "@/lib/data";
+import { supabase } from "@/lib/supabase";
+import type { Property, Agent } from "@/lib/data";
 
 const stats = [
   { label: "Active Listings", value: "12,400+", icon: Home },
@@ -77,9 +78,12 @@ const popularAreas = [
   { city: "Port Elizabeth", count: 720, image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&h=250&fit=crop" },
 ];
 
-const featuredProperties = properties.filter((p) => p.featured).slice(0, 4);
+export default async function HomePage() {
+  const [{ data: featuredProperties }, { data: agents }] = await Promise.all([
+    supabase.from("properties").select("*").eq("featured", true).limit(4),
+    supabase.from("agents").select("*").limit(4),
+  ]);
 
-export default function HomePage() {
   return (
     <div>
       {/* Hero */}
@@ -165,7 +169,7 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {featuredProperties.map((p) => (
+            {(featuredProperties ?? []).map((p: Property) => (
               <PropertyCard key={p.id} property={p} />
             ))}
           </div>
@@ -315,7 +319,7 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {agents.map((a) => (
+            {(agents ?? []).map((a: Agent) => (
               <AgentCard key={a.id} agent={a} />
             ))}
           </div>
